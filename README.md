@@ -1,0 +1,2 @@
+# hatenablog_pagelist
+はてなブログの記事一覧をつくるスクリプト
