@@ -89,10 +89,10 @@ conf = {
 data = {
     'title'    : None,
     'basename' : None,
-    'category' : None,
+    'categories' : [],
     'custom'   : {
         'full_url' : None,
-        'full_category_url' : None,
+        'full_category_urls' : [],
         'readable_datetime' : None,
     }
 }
@@ -136,7 +136,7 @@ for i,line in enumerate(lines):
         continue
 
     if name=='category':
-        current_data['category'] = value
+        current_data['categories'].append(value)
         continue
 
     if name=='image':
@@ -152,10 +152,17 @@ for i,line in enumerate(lines):
             current_data['basename']
         )
 
-        current_data['custom']['full_category_url'] = '{:}{:}'.format(
-            conf['url']['category'],
-            urllib.parse.quote(current_data['category'], encoding='utf-8')
-        )
+        if(len(current_data['categories']) == 0):
+            # カテゴリー未設定時は
+            # urllib.parse.quote で TypeError: quote() doesn't support 'encoding' for bytes
+            # が出るので, カテゴリ未設定の旨を適当に設定しておく.
+            current_data['categories'].append('__CATEGORY_NOT_SET__')
+        for i,categoryname in enumerate(current_data['categories']):
+            full_category_url = '{:}{:}'.format(
+                conf['url']['category'],
+                urllib.parse.quote(categoryname, encoding='utf-8')
+            )
+            current_data['custom']['full_category_urls'].append(full_category_url)
 
         basename = current_data['basename']
         dt = basename2datetimeobj(basename)
@@ -201,10 +208,12 @@ for yyyymm_key in alldata_with_yyyymmkeys:
         outlines.append('- {:}'.format(
             data['custom']['readable_datetime'],
         ))
-        outlines.append('  - カテゴリ: [{:}]({:})'.format(
-            data['category'],
-            data['custom']['full_category_url'],
-        ))
+        for i,url in enumerate(data['custom']['full_category_urls']):
+            text = data['categories'][i]
+            outlines.append('  - カテゴリ: [{:}]({:})'.format(
+                text,
+                url,
+            ))
         outlines.append('  - [{:}]({:})'.format(
             data['title'],
             data['custom']['full_url'],
